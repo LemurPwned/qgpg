@@ -8,6 +8,19 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+
+
+#include        <sys/time.h>    /* timeval{} for select() */
+#include        <time.h>                /* timespec{} for pselect() */
+
+#include        <errno.h>
+#include        <fcntl.h>               /* for nonblocking */
+#include        <netdb.h>
+#include        <signal.h>
+
+
+
+
 #include "sock_utils.h"
 #define BUF_SIZE 1000
 
@@ -22,6 +35,7 @@ int command_processor(char *command){
     return 0;
   }
 }
+
 
 int main(){
   char client_str[BUF_SIZE];
@@ -72,7 +86,7 @@ int main(){
       // remove CR CF command
       // remove_char_from_string('\n', cmdline);
 
-      write(comm_fd, cmdline, strlen(cmdline)+1);
+      writen(comm_fd, cmdline, strlen(cmdline));
     }
   return 0;
 }
