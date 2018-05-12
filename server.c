@@ -62,6 +62,8 @@ int main(){
       bzero(cmdline, BUF_SIZE);
 
       read(comm_fd, client_str, BUF_SIZE);
+      printf("%s\n", client_str);
+
       // remove CR CF command
       // remove_char_from_string('\n', client_str);
       // process client command

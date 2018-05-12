@@ -37,6 +37,7 @@ int main(){
       write(sockfd, sendline, strlen(sendline)+1);
 
       read(sockfd, recvline, BUF_SIZE);
+      printf("%s\n", recvline);
   }
   return 0;
 }
