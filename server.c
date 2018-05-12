@@ -27,7 +27,6 @@ int main(){
   char client_str[BUF_SIZE];
   char cmdline[BUF_SIZE];
 
-
   int listen_fd, comm_fd;
 
   struct sockaddr_in servaddr;
@@ -64,12 +63,12 @@ int main(){
 
       read(comm_fd, client_str, BUF_SIZE);
       // remove CR CF command
-      remove_char_from_string('\n', client_str);
+      // remove_char_from_string('\n', client_str);
       // process client command
 
       fgets(cmdline, BUF_SIZE, stdin);
       // remove CR CF command
-      remove_char_from_string('\n', cmdline);
+      // remove_char_from_string('\n', cmdline);
 
       write(comm_fd, cmdline, strlen(cmdline)+1);
     }
