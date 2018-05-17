@@ -6,8 +6,17 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-
+#include <sys/time.h>    /* timeval{} for select() */
+#include <time.h>                /* timespec{} for pselect() */
+#include <errno.h>
+#include <fcntl.h>               /* for nonblocking */
+#include <netdb.h>
+#include <signal.h>
 #define BUF_SIZE 1000
+#include "sock_utils.h"
+#include "sock_utils.c"
+
+ssize_t	writen(int fd, const void *vptr, size_t n);
 
 int main(){
   int sockfd;
@@ -34,10 +43,12 @@ int main(){
       bzero(recvline, BUF_SIZE);
       // get stdin
       fgets(sendline, BUF_SIZE, stdin);
-      write(sockfd, sendline, strlen(sendline)+1);
-
+      writen(sockfd, sendline, strlen(sendline)+1);
       read(sockfd, recvline, BUF_SIZE);
       printf("%s\n", recvline);
   }
   return 0;
 }
+
+
+
