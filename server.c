@@ -22,7 +22,7 @@
 
 
 #include "sock_utils.h"
-#define BUF_SIZE 1000
+#define BUF_SIZE 1024
 
 int command_processor(char *command){
   if (strcmp(command, "quit") == 0){
@@ -41,10 +41,12 @@ int main(){
   char client_str[BUF_SIZE];
   char cmdline[BUF_SIZE];
 
-  int listen_fd, comm_fd;
+  int listen_fd, comm_fd, alice_fd, bob_fd;
 
   struct sockaddr_in servaddr;
-
+	
+	struct sockaddr_storage serverStorage;
+	socklen_t addr_size;
   listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   bzero(&servaddr, sizeof(servaddr));
@@ -56,18 +58,20 @@ int main(){
   bind(listen_fd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
   printf("Starting a server!\n");
-  listen(listen_fd, 10);
+  if (listen(listen_fd, 10)==0)
+	printf("Listening\n");
+	else
+	printf("Error\n");
 
-  if ((comm_fd = accept(listen_fd, (struct sockaddr*) NULL, NULL)) < 0){
-      printf("Failed connection");
-      exit(0);
-  }
-  else printf("System connected\n");
-
+    addr_size = sizeof serverStorage;
+    alice_fd = accept(listen_fd, (struct sockaddr *) &serverStorage, &addr_size);
+	printf("Alice connected");
+    bob_fd = accept(listen_fd, (struct sockaddr *) &serverStorage, &addr_size);
+	printf("Bob connected");
   int on = 1;
-  if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0){
-      printf("SO_REUSEADDR failed to be set");
-  }
+ // if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0){
+ //     printf("SO_REUSEADDR failed to be set");
+ // }
 
   char msg[BUF_SIZE];
 
@@ -75,18 +79,21 @@ int main(){
       bzero(client_str, BUF_SIZE);
       bzero(cmdline, BUF_SIZE);
 
-      read(comm_fd, client_str, BUF_SIZE);
-      printf("%s\n", client_str);
+	read(alice_fd, client_str, BUF_SIZE);
+	printf("%s\n", client_str);
+	read(bob_fd, client_str, BUF_SIZE);
+	printf("%s\n", client_str);
 
       // remove CR CF command
-      // remove_char_from_string('\n', client_str);
+      //remove_char_from_string('\n', client_str);
       // process client command
 
       fgets(cmdline, BUF_SIZE, stdin);
       // remove CR CF command
-      // remove_char_from_string('\n', cmdline);
+      //remove_char_from_string('\n', cmdline);
 
-      writen(comm_fd, cmdline, strlen(cmdline));
-    }
+	writen(alice_fd, cmdline, strlen(cmdline));
+	writen(bob_fd, cmdline, strlen(cmdline));  
+	}
   return 0;
 }
