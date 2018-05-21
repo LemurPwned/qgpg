@@ -16,7 +16,14 @@
 
 #include "sock_utils.h"
 
+#define SPECIFIED_TIMEOUT 3
 #define BUF_SIZE 1024
+
+volatile sig_atomic_t wait_timeout = 1;
+
+void timeout_handler (int sig){
+  wait_timeout = 0;
+}
 
 int command_processor(char *command){
   if (strcmp(command, "quit") == 0){
@@ -63,32 +70,59 @@ int main(){
   addr_size = sizeof serverStorage;
 
   alice_fd = accept(listen_fd, (struct sockaddr *) &serverStorage, &addr_size);
-  strcpy(msg, "Alice connected. Waiting for Bob\n");
-	printf(msg);
-  write(alice_fd, msg, strlen(msg));
+  if (alice_fd < 0){
+    perror("Alice failed to connect");
+  }
+  else{
+    strcpy(msg, "Alice connected. Waiting for Bob\n");
+    printf(msg);
+    write(alice_fd, msg, strlen(msg));
+    // start signal count
+  }
+
+  struct sigaction siga;
+  siga.sa_handler = timeout_handler;
+  siga.sa_flags = 0;
+
+  if (sigaction(SIGALRM, &siga, NULL) < 0){
+    perror("Sigaction");
+  }
+  alarm(SPECIFIED_TIMEOUT);
 
   bob_fd = accept(listen_fd, (struct sockaddr *) &serverStorage, &addr_size);
-  bzero(&msg, sizeof(msg));
-  printf("Bob connected\n");
-
-  strcpy(msg, "Both parties connected\n");
-  write(alice_fd, msg, strlen(msg));
-  write(bob_fd, msg, strlen(msg));
-
+  if (bob_fd < 0){
+    perror("Bob failed to connect");
+  }
+  else{
+    printf("Bob connected\n");
+  }
+  if (!wait_timeout){
+    perror("Timeout exceeded");
+    close(alice_fd);
+    exit(-1);
+  }
+  else {
+    wait_timeout = 1; //reset signal
+    bzero(&msg, sizeof(msg));
+    strcpy(msg, "Both parties connected\n");
+    write(alice_fd, msg, strlen(msg));
+    write(bob_fd, msg, strlen(msg));
+  }
 
   while(true){
       bzero(client_str, BUF_SIZE);
       bzero(cmdline, BUF_SIZE);
 
-	read(alice_fd, client_str, BUF_SIZE);
-	printf("%s\n", client_str);
-	read(bob_fd, client_str, BUF_SIZE);
-	printf("%s\n", client_str);
+    	read(alice_fd, client_str, BUF_SIZE);
+    	printf("%s\n", client_str);
+    	read(bob_fd, client_str, BUF_SIZE);
+    	printf("%s\n", client_str);
 
-  fgets(cmdline, BUF_SIZE, stdin);
+      fgets(cmdline, BUF_SIZE, stdin);
 
-	writen(alice_fd, cmdline, strlen(cmdline));
-	writen(bob_fd, cmdline, strlen(cmdline));
-	}
+    	writen(alice_fd, cmdline, strlen(cmdline));
+    	writen(bob_fd, cmdline, strlen(cmdline));
+	 }
+
   return 0;
 }
