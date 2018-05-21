@@ -12,9 +12,12 @@
 #include <fcntl.h>               /* for nonblocking */
 #include <netdb.h>
 #include <signal.h>
-#define BUF_SIZE 1000
+
 #include "sock_utils.h"
 #include "sock_utils.c"
+
+
+#define BUF_SIZE 1000
 
 ssize_t	writen(int fd, const void *vptr, size_t n);
 
@@ -37,6 +40,14 @@ int main(){
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0){
       printf("SO_REUSEADDR failed to be set");
   }
+  do {
+    bzero(recvline, BUF_SIZE);
+    read(sockfd, recvline, BUF_SIZE);
+    printf("%s\n", recvline);
+  } while(strcmp(recvline, "Both parties connected\n") != 0);
+
+  printf("Communication begins...");
+  
   while(true)
   {
       bzero(sendline, BUF_SIZE);
@@ -49,6 +60,3 @@ int main(){
   }
   return 0;
 }
-
-
-
