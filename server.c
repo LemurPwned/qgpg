@@ -13,7 +13,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <signal.h>
-
+#include "daemon.c"
 #include "sock_utils.h"
 
 #define SPECIFIED_TIMEOUT 3
@@ -108,7 +108,7 @@ int main(){
     write(alice_fd, msg, strlen(msg));
     write(bob_fd, msg, strlen(msg));
   }
-
+skeleton_daemon();
   while(true){
       bzero(client_str, BUF_SIZE);
       bzero(cmdline, BUF_SIZE);
