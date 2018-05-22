@@ -16,6 +16,8 @@
 
 // #include "daemon.c"
 #include "sock_utils.h"
+#include "qgpg_proto_def.h"
+#include "qgpg_proto_def.c"
 
 #define SPECIFIED_TIMEOUT 10
 #define BUF_SIZE 1024
@@ -120,8 +122,10 @@ int main(){
       bzero(client_str, BUF_SIZE);
       bzero(cmdline, BUF_SIZE);
 
-    	read(alice_fd, client_str, BUF_SIZE);
-    	printf("%s\n", client_str);
+      receive_message(alice_fd, 1);
+    	// read(alice_fd, client_str, BUF_SIZE);
+    	// printf("%s\n", client_str);
+
     	read(bob_fd, client_str, BUF_SIZE);
     	printf("%s\n", client_str);
 

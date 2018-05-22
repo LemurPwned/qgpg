@@ -1,4 +1,4 @@
-CFLAGS = -Wall
+CFLAGS = -Wall -lsodium
 GDB = -g
 
 GLOB_OBJ = server.o client.o sock_utils.o proto.o
@@ -9,14 +9,14 @@ CVER = -std=gnu11
 all: app
 
 app: $(GLOB_OBJ)
-	gcc $(CFLAGS) -lsodium client.c -o client 
+	gcc $(CFLAGS) client.c -o client
 	gcc $(CFLAGS) $(SERV_DEP) -o server
 
 debug: $(GLOB_OBJ)
 	gcc $(GDB) $(CFLAGS) client.c -o client
 	gcc $(GDB) $(CFLAGS) $(SERV_DEP) -o server
 
-server.o: server.c
+server.o: proto.o server.c
 	gcc -c server.c
 
 client.o: proto.o client.c
