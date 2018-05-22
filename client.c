@@ -11,7 +11,6 @@
 #include <errno.h>
 #include <fcntl.h>               /* for nonblocking */
 #include <netdb.h>
-#include <signal.h>
 
 #include "sock_utils.h"
 #include "sock_utils.c"
@@ -35,7 +34,9 @@ int main(){
 
   inet_pton(AF_INET,"127.0.0.1", &(servaddr.sin_addr));
 
-  connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+  if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
+    printf("%s\n", "Failed to connect");
+  }
   int on = 1;
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0){
       printf("SO_REUSEADDR failed to be set");
@@ -47,7 +48,7 @@ int main(){
   } while(strcmp(recvline, "Both parties connected\n") != 0);
 
   printf("Communication begins...");
-  
+
   while(true)
   {
       bzero(sendline, BUF_SIZE);

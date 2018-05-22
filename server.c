@@ -98,6 +98,9 @@ int main(){
   }
   if (!wait_timeout){
     perror("Timeout exceeded");
+    strcpy(msg, "Bob failed to connect in time. Closing socket...\n");
+    write(alice_fd, msg, strlen(msg));
+    sleep(2);
     close(alice_fd);
     exit(-1);
   }
