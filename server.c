@@ -13,10 +13,11 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <signal.h>
-#include "daemon.c"
+
+// #include "daemon.c"
 #include "sock_utils.h"
 
-#define SPECIFIED_TIMEOUT 3
+#define SPECIFIED_TIMEOUT 10
 #define BUF_SIZE 1024
 
 volatile sig_atomic_t wait_timeout = 1;
@@ -101,8 +102,8 @@ int main(){
     strcpy(msg, "Bob failed to connect in time. Closing socket...\n");
     write(alice_fd, msg, strlen(msg));
     sleep(2);
-    close(alice_fd);
-    exit(-1);
+    // close(alice_fd);
+    // exit(-1);
   }
   else {
     wait_timeout = 1; //reset signal
@@ -111,7 +112,10 @@ int main(){
     write(alice_fd, msg, strlen(msg));
     write(bob_fd, msg, strlen(msg));
   }
-skeleton_daemon();
+
+  //TODO: Enable deamon when app is ready
+  //  skeleton_daemon();
+
   while(true){
       bzero(client_str, BUF_SIZE);
       bzero(cmdline, BUF_SIZE);
