@@ -14,7 +14,7 @@
 
 enum message_type {
   POLARIZATION_SND,
-  POLARIZATION_RCV,
+  POLARIZATION_REQ,
   TIMEOUT_EXCEEDED,
 };
 
@@ -31,7 +31,7 @@ struct qgpg_message{
 };
 
 int construct_message_type(int, int);
-int construct_server_message(int);
+int construct_server_message(int, int);
 
 int receive_message(int, int);
 void generate_random_byte_string(char string_buffer[64]);

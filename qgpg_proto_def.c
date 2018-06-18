@@ -1,17 +1,19 @@
 #include "qgpg_proto_def.h"
 #include "sock_utils.h"
 
+time_t global_time;
 
-int construct_server_message(int socketfd){
+int construct_server_message(int socketfd, int type){
   struct qgpg_message server_message;
   struct qgpg_data null_data;
   // data is empty
   bzero(&null_data, sizeof(null_data));
 
-  time_t t = time(NULL);
-  struct tm tm = *localtime(&t);
-  server_message.date_sent =  tm.tm_sec;
-  server_message.type = POLARIZATION_SND; // polarization send request
+  global_time = time(NULL);
+  struct tm current_time = *localtime(&global_time);
+
+  server_message.date_sent = current_time.tm_sec;
+  server_message.type = type; // polarization send request
 
   // copy zeros to message payload
   memcpy((void *) server_message.payload, (void*)&null_data,
@@ -25,11 +27,11 @@ int construct_message_type(int socketfd, int seq){
   struct qgpg_message to_send;
   struct qgpg_data polarization_data;
 
-  time_t t = time(NULL);
-  struct tm tm = *localtime(&t);
+  global_time = time(NULL);
+  struct tm current_time = *localtime(&global_time);
 
-  to_send.type = POLARIZATION_RCV; // receive polarization
-  to_send.date_sent = tm.tm_sec;
+  to_send.type = POLARIZATION_SND; // receive polarization
+  to_send.date_sent = current_time.tm_sec;
   // intialize random state
   char string_buffer[64];
   polarization_data.data_id = seq;
@@ -39,8 +41,8 @@ int construct_message_type(int socketfd, int seq){
   generate_random_byte_string(string_buffer);
   strcpy(polarization_data.polarization_orthogonality, string_buffer);
 
-  printf("%s\n", polarization_data.polarization_basis);
-  printf("%s\n", polarization_data.polarization_orthogonality);
+  // printf("%s\n", polarization_data.polarization_basis);
+  // printf("%s\n", polarization_data.polarization_orthogonality);
 
   memcpy((void *) to_send.payload, (void*)&polarization_data,
                                     sizeof(polarization_data));
@@ -65,13 +67,14 @@ int receive_message(int socketfd, int seq){
       return POLARIZATION_SND;
       break;
 
-    case POLARIZATION_RCV:
-      printf("%s\n", "Polarization send request received");
-      return POLARIZATION_RCV;
+    case POLARIZATION_REQ:
+      printf("%s\n", "Polarization request received");
+      return POLARIZATION_REQ;
       break;
 
     case TIMEOUT_EXCEEDED:
       printf("%s\n", "Connection timeout has been exceeded");
+      return TIMEOUT_EXCEEDED;
       break;
 
     default:

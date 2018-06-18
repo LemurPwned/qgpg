@@ -59,12 +59,22 @@ int main(){
       // now wait for server to allow for connection
       msg_type = receive_message(sockfd, sequence_number);
       // send polarization if requested
-      if (msg_type == POLARIZATION_SND){
+      if (msg_type == POLARIZATION_REQ){
         printf("%s\n", "Sending response struct to server");
         construct_message_type(sockfd, sequence_number);
       }
-      else perror("Unknown server request");
-
+      else if (msg_type == TIMEOUT_EXCEEDED){
+        // graceful shutdown
+        // close(sockfd);
+        perror("Timeout error\n");
+      }
+      else if (msg_type == POLARIZATION_SND){
+        perror("REQUEST HAS BEEN SENT\n");
+      }
+      else {
+        perror("Unknown server request");
+        printf("UNKOWN TYPE %d\n", msg_type);
+        }
       sequence_number++;
   }
   return 0;

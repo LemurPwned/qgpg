@@ -21,11 +21,21 @@
 
 #define SPECIFIED_TIMEOUT 10
 #define BUF_SIZE 1024
-
+#define MAX_SEQUENCE_EXCHANGE 3
 volatile sig_atomic_t wait_timeout = 1;
+struct sigaction siga;
 
 void timeout_handler (int sig){
   wait_timeout = 0;
+}
+
+void reset_and_start_timer(int time_required){
+  wait_timeout = 1; // resets the signal timer
+
+  // sets up the alarm again
+  siga.sa_handler = timeout_handler;
+  siga.sa_flags = 0; 
+  alarm(time_required);
 }
 
 int command_processor(char *command){
@@ -83,7 +93,6 @@ int main(){
     // start signal count
   }
 
-  struct sigaction siga;
   siga.sa_handler = timeout_handler;
   siga.sa_flags = 0;
 
@@ -119,18 +128,29 @@ int main(){
   //  skeleton_daemon();
 
   int sequence_number = 1;
-  int msg_type;
-
+  int msg_type, saved_timeout_state;
+  wait_timeout = 1;
+  saved_timeout_state = 1;
+  #define SPECIFIED_TIMEOUT 2
   // initialize by sending to alice
-  construct_server_message(alice_fd);
+  construct_server_message(alice_fd, POLARIZATION_REQ);
   while(true){
       // receive from alice
       printf("%s\n", "Waiting for Alice...");
+      reset_and_start_timer(SPECIFIED_TIMEOUT);
       msg_type = receive_message(alice_fd, sequence_number);
-      if (msg_type == POLARIZATION_RCV){
+      saved_timeout_state = wait_timeout;
+      alarm(0); // cancel
+      if (msg_type == POLARIZATION_SND){
         // can send request
         // write to bob that he should respond
-        construct_server_message(bob_fd);
+        if (saved_timeout_state){
+          construct_server_message(bob_fd, POLARIZATION_REQ);
+        }
+        else{
+          printf("EXCEEDED TIME\n");
+          construct_server_message(bob_fd, TIMEOUT_EXCEEDED);
+        }
       }
       else {
         printf("%s\n", "Quitting, invalid sequence");
@@ -138,18 +158,34 @@ int main(){
         close(bob_fd);
         exit(-1);
       }
+      sleep(SPECIFIED_TIMEOUT/5);
       printf("%s\n", "Receiving from Bob...");
+      reset_and_start_timer(SPECIFIED_TIMEOUT);
+      sleep(5);
       msg_type = receive_message(bob_fd, sequence_number);
-            if (msg_type == POLARIZATION_RCV){
+      saved_timeout_state = wait_timeout;
+      alarm(0);
+      if (msg_type == POLARIZATION_SND){
         // can send request
         // write to alice that she should send something
-        construct_server_message(alice_fd);
-      }
+        if (saved_timeout_state){
+          construct_server_message(alice_fd, POLARIZATION_REQ);
+        }
+        else{
+          printf("EXCEEDED TIME\n");
+          construct_server_message(alice_fd, TIMEOUT_EXCEEDED);
+        }      }
       else {
         printf("%s\n", "Quitting, invalid sequence");
         close(alice_fd);
         close(bob_fd);
         exit(-1);
+      }
+      if (sequence_number >= MAX_SEQUENCE_EXCHANGE){
+        // polarization exchange ended
+        // time to exchange keys
+        printf("%s\n", "Communication has finished");
+        break;
       }
       sequence_number++; // await next message
 	 }
