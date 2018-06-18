@@ -118,21 +118,40 @@ int main(){
   //TODO: Enable deamon when app is ready
   //  skeleton_daemon();
 
+  int sequence_number = 1;
+  int msg_type;
+
+  // initialize by sending to alice
+  construct_server_message(alice_fd);
   while(true){
-      bzero(client_str, BUF_SIZE);
-      bzero(cmdline, BUF_SIZE);
-
-      receive_message(alice_fd, 1);
-    	// read(alice_fd, client_str, BUF_SIZE);
-    	// printf("%s\n", client_str);
-
-    	read(bob_fd, client_str, BUF_SIZE);
-    	printf("%s\n", client_str);
-
-      fgets(cmdline, BUF_SIZE, stdin);
-
-    	writen(alice_fd, cmdline, strlen(cmdline));
-    	writen(bob_fd, cmdline, strlen(cmdline));
+      // receive from alice
+      printf("%s\n", "Waiting for Alice...");
+      msg_type = receive_message(alice_fd, sequence_number);
+      if (msg_type == POLARIZATION_RCV){
+        // can send request
+        // write to bob that he should respond
+        construct_server_message(bob_fd);
+      }
+      else {
+        printf("%s\n", "Quitting, invalid sequence");
+        close(alice_fd);
+        close(bob_fd);
+        exit(-1);
+      }
+      printf("%s\n", "Receiving from Bob...");
+      msg_type = receive_message(bob_fd, sequence_number);
+            if (msg_type == POLARIZATION_RCV){
+        // can send request
+        // write to alice that she should send something
+        construct_server_message(alice_fd);
+      }
+      else {
+        printf("%s\n", "Quitting, invalid sequence");
+        close(alice_fd);
+        close(bob_fd);
+        exit(-1);
+      }
+      sequence_number++; // await next message
 	 }
 
   return 0;

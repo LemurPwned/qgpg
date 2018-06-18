@@ -23,7 +23,6 @@ ssize_t	writen(int fd, const void *vptr, size_t n);
 
 int main(){
   int sockfd;
-  char sendline[BUF_SIZE];
   char recvline[BUF_SIZE];
   struct sockaddr_in servaddr;
 
@@ -53,17 +52,20 @@ int main(){
 
   printf("Communication begins...\n");
 
+  int sequence_number = 1;
+  int msg_type;
   while(true)
   {
-      bzero(sendline, BUF_SIZE);
-      bzero(recvline, BUF_SIZE);
-      // get stdin
-      // fgets(sendline, BUF_SIZE, stdin);
-      printf("%s\n", "Sending struct");
-      construct_message_type(sockfd, 1);
-      // writen(sockfd, sendline, strlen(sendline)+1);
-      read(sockfd, recvline, BUF_SIZE);
-      printf("%s\n", recvline);
+      // now wait for server to allow for connection
+      msg_type = receive_message(sockfd, sequence_number);
+      // send polarization if requested
+      if (msg_type == POLARIZATION_SND){
+        printf("%s\n", "Sending response struct to server");
+        construct_message_type(sockfd, sequence_number);
+      }
+      else perror("Unknown server request");
+
+      sequence_number++;
   }
   return 0;
 }

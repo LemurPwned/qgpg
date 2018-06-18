@@ -26,11 +26,15 @@ struct qgpg_data{
 
 struct qgpg_message{
   enum message_type type;
-  char date_sent;
+  int date_sent;
   char payload[MAX_PAYLOAD_SIZE];
 };
 
 int construct_message_type(int, int);
+int construct_server_message(int);
+
 int receive_message(int, int);
 void generate_random_byte_string(char string_buffer[64]);
+void pol_comparison(char input_buffer[64], char guess_buffer[64],
+                    char secret_buffer[64]);
 #endif
