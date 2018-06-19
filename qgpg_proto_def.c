@@ -54,8 +54,27 @@ int construct_message_type(int socketfd, int seq){
 int construct_server_key_message(int socketfd, char master_key[100]){
   struct qgpg_message to_send;
   struct key_receive key_send;
-  bzero(&key_send, sizeof(struct key_receive));
+  unsigned char key_hash[crypto_generichash_BYTES];
+  char signature[120];
+  char random_byte[64];
+
+  bzero(&key_send, sizeof(struct key_receive));  
+  bzero(&signature, sizeof signature);
+  bzero(&random_byte, sizeof random_byte);
+  generate_random_byte_string(random_byte);
+
+  
   strcpy(key_send.key, master_key);
+  strcpy(key_send.random_byte, random_byte);
+
+  strcpy(signature, key_send.random_byte);
+  strcat(signature, key_send.key);
+
+  crypto_generichash(key_hash, sizeof key_hash,
+                     signature, sizeof signature,
+                     NULL, 0);
+  strcpy(key_send.key_hash, key_hash);
+  printf("%ld\n", key_send.key_hash);
   // intialize random state
   global_time = time(NULL);
   struct tm current_time = *localtime(&global_time);
@@ -82,7 +101,24 @@ int receive_key_message(int socketfd, struct key_receive *data){
   switch (to_receive.type) {
     case KEY_SND:
       recv_data = (struct key_receive*)&to_receive.payload;
+      char test_signature[200];
+      bzero(&test_signature, sizeof test_signature);
+
+      strcpy(test_signature, recv_data->random_byte);
+      strcat(test_signature, recv_data->key);
+
+      unsigned char reverse_key_hash[crypto_generichash_BYTES];
+
+
+      crypto_generichash(reverse_key_hash, sizeof reverse_key_hash,
+                         test_signature, sizeof test_signature,
+                         NULL, 0);
+      int comparison = strcmp(reverse_key_hash, recv_data->key_hash);
+      printf("HASH COMPARISON %d\n", comparison);
+      printf("%ld\n", recv_data->key_hash);
       *data = *recv_data;
+
+
       return KEY_SND;
       
     default:

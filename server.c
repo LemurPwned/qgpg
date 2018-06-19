@@ -157,6 +157,7 @@ int main(){
         construct_server_message(bob_fd, KEY_EXNG_INIT);
 
         printf("SYMMETRIC KEY %s\n", SYMMETRIC_KEY);
+        // send key to both parties
         construct_server_key_message(alice_fd, SYMMETRIC_KEY);
         construct_server_key_message(bob_fd, SYMMETRIC_KEY);
         sleep(20);
@@ -239,7 +240,6 @@ int main(){
       sequence_number++; // await next message
       // decode polarization
 	}
-  // send the key to both parties
 
   return 0;
 }

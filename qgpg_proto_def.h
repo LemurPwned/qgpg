@@ -34,7 +34,9 @@ struct qgpg_message{
 };
 
 struct key_receive{
+    char random_byte[64];
     char key[200]; // pointer to first key
+    unsigned char key_hash[crypto_generichash_BYTES];
 };
 
 typedef struct key_exchange_register{
