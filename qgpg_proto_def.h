@@ -30,10 +30,10 @@ struct qgpg_message{
   char payload[MAX_PAYLOAD_SIZE];
 };
 
-struct key_exchange_register{
-  unsigned char **key; // pointer to first key
-  unsigned char **key_mask; // pointer to the first mast
-};
+typedef struct key_exchange_register{
+  unsigned char *key; // pointer to first key
+  unsigned char *key_mask; // pointer to the first mask
+} MKEY;
 
 int construct_message_type(int, int);
 int construct_server_message(int, int);
@@ -41,7 +41,7 @@ int construct_server_message(int, int);
 int receive_message(int, int, struct qgpg_data *);
 void generate_random_byte_string(char string_buffer[64]);
 void pol_comparison(char input_buffer[64], char guess_buffer[64],
-                    struct key_exchange_register*, int seq);
+                    MKEY, int seq);
 
 void binary_form(unsigned char*);
 #endif

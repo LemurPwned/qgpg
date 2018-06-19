@@ -51,7 +51,18 @@ int command_processor(char *command){
 }
 
 
-int main(){
+int main(){ 
+  // unsigned char boy;
+  // for (int i = 0; i < MAX_SEQUENCE_EXCHANGE; i ++){
+  //   boy = (unsigned char) i;
+  //   master_key.key_mask[i] = boy;
+  // }
+  // for (int i = 0; i < MAX_SEQUENCE_EXCHANGE; i ++){
+  //   printf("%s : %d\n", "KEY", master_key.key_mask[i]);
+  // }
+  // exit(0);
+  // zero the master key
+
   char client_str[BUF_SIZE];
   char cmdline[BUF_SIZE];
   char msg[BUF_SIZE];
@@ -127,12 +138,14 @@ int main(){
   //TODO: Enable deamon when app is ready
   //  skeleton_daemon();
 
-  struct qgpg_data data;
+  struct qgpg_data alice_data, bob_data;
   // zero the data
-  bzero(&data, sizeof(struct qgpg_data));
-  struct key_exchange_register master_key;
-  // zero the master key
-  bzero(&master_key, sizeof(struct key_exchange_register));
+  bzero(&alice_data, sizeof(struct qgpg_data));
+  bzero(&alice_data, sizeof(struct qgpg_data));
+
+
+  MKEY master_key;
+  master_key.key_mask = (unsigned char*)malloc(MAX_SEQUENCE_EXCHANGE*sizeof(unsigned char));
 
   int sequence_number = 1;
   int msg_type, saved_timeout_state;
@@ -145,14 +158,13 @@ int main(){
       // receive from alice
       printf("%s\n", "Waiting for Alice...");
       reset_and_start_timer(SPECIFIED_TIMEOUT/5);
-      msg_type = receive_message(alice_fd, sequence_number, &data);
+      bzero(&alice_data, sizeof(struct qgpg_data));
+      msg_type = receive_message(alice_fd, sequence_number, &alice_data);
       saved_timeout_state = wait_timeout;
       alarm(0); // cancel alarm 
       if (msg_type == POLARIZATION_SND){
         // actual message, check the data
         printf("%s\n", "Polarization received");
-        printf("%s\n", data.polarization_basis);
-        bzero(&data, sizeof(struct qgpg_data));
         // can send request
         // write to bob that he should respond
         if (saved_timeout_state){
@@ -172,13 +184,12 @@ int main(){
       sleep(SPECIFIED_TIMEOUT/5);
       printf("%s\n", "Receiving from Bob...");
       reset_and_start_timer(SPECIFIED_TIMEOUT/5);
-      msg_type = receive_message(bob_fd, sequence_number, &data);
+      bzero(&bob_data, sizeof(struct qgpg_data));
+      msg_type = receive_message(bob_fd, sequence_number, &bob_data);
       saved_timeout_state = wait_timeout;
       alarm(0);
       if (msg_type == POLARIZATION_SND){
         printf("%s\n", "Polarization received");
-        printf("%s\n", data.polarization_basis);
-        bzero(&data, sizeof(struct qgpg_data));
         // can send request
         // write to alice that she should send something
         if (saved_timeout_state){
@@ -195,6 +206,12 @@ int main(){
         close(bob_fd);
         exit(-1);
       }
+      printf("COMPARING: \n%s\n%s\n", alice_data.polarization_orthogonality,
+                                      bob_data.polarization_orthogonality);
+      pol_comparison(alice_data.polarization_orthogonality, 
+                     bob_data.polarization_orthogonality,
+                     master_key, sequence_number);
+      printf("MASTER KEY: %ld\n", master_key.key_mask[sequence_number]);
       if (sequence_number >= MAX_SEQUENCE_EXCHANGE){
         // polarization exchange ended
         // time to exchange keys
@@ -202,6 +219,7 @@ int main(){
         break;
       }
       sequence_number++; // await next message
+      // decode polarization
 	 }
 
   return 0;

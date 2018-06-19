@@ -110,15 +110,16 @@ void generate_random_byte_string(char string_buffer[64]){
 }
 
 void pol_comparison(char input_buffer[64], char guess_buffer[64],
-                    struct key_exchange_register* master_key, int seq){
+                    MKEY master_key, int seq){
   // unsigned char because we send just one byte via channel
   unsigned char input = strtol(input_buffer, NULL, 2); 
   //take binary of both polarizations
   unsigned char guess = strtol(guess_buffer, NULL, 2);
   unsigned char mask = ~(input^guess);  // this is key mask
   binary_form(&mask);
+  printf("%s\n", "Devised mask above");
   //mask should now contain only ones that do agree
-  master_key->key_mask[seq] = &mask;
+  master_key.key_mask[seq] = mask;
 }
 
 void binary_form(unsigned char *a){
