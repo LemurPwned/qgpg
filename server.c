@@ -132,16 +132,18 @@ int main(){
   bzero(&alice_data, sizeof(struct qgpg_data));
   bzero(&alice_data, sizeof(struct qgpg_data));
 
-
+  char SYMMETRIC_KEY[MAX_SEQUENCE_EXCHANGE*10];
+  strcpy(SYMMETRIC_KEY, "");
+  // SYMMETRIC_KEY = (char *)malloc(MAX_SEQUENCE_EXCHANGE*8*sizeof(char *));
+  // bzero(SYMMETRIC_KEY, sizeof(char)*80*MAX_SEQUENCE_EXCHANGE);
   MKEY master_key;
   master_key.key_mask = (unsigned char*)malloc(MAX_SEQUENCE_EXCHANGE*sizeof(unsigned char));
-  master_key.key = (unsigned char*)malloc(MAX_SEQUENCE_EXCHANGE*sizeof(unsigned char));
+  master_key.key = (char*)malloc(MAX_SEQUENCE_EXCHANGE*sizeof(char *));
 
   int sequence_number = 1;
   int msg_type, saved_timeout_state;
   wait_timeout = 1;
   saved_timeout_state = 1;
-  // #define SPECIFIED_TIMEOUT 2
   // initialize by sending to alice
   construct_server_message(alice_fd, POLARIZATION_REQ);
   while(true){
@@ -206,7 +208,12 @@ int main(){
                            sequence_number);
       printf("MASTER KEY MASK: %ld\n", master_key.key_mask[sequence_number]);
       printf("ALICE KEY: %s\n", alice_data.polarization_orthogonality);
-      // printf("MASTER KEY: %ld\n", master_key.key[sequence_number]);
+      printf("MASTERKEY:");
+      strncat(SYMMETRIC_KEY, master_key.key[sequence_number], 8);
+      for (int i=0; i < 8; i++){
+        printf("%c", master_key.key[sequence_number][i]);
+      }
+      printf("\n");
       if (sequence_number >= MAX_SEQUENCE_EXCHANGE){
         // polarization exchange ended
         // time to exchange keys
@@ -216,6 +223,10 @@ int main(){
       sequence_number++; // await next message
       // decode polarization
 	}
-
+  // send the key to both parties
+  printf("SYMMETRIC KEY %s\n", SYMMETRIC_KEY);
+  // construct_server_key_message(alice_fd, SYMMETRIC_KEY);
+  // construct_server_key_message(bob_fd, SYMMETRIC_KEY);
+  sleep(20);
   return 0;
 }

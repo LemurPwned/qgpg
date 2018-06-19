@@ -67,6 +67,10 @@ int main(){
         printf("%s\n", "Sending response struct to server");
         construct_message_type(sockfd, sequence_number);
       }
+      else if (msg_type == KEY_EXNG_INIT){
+        // initiate key exchange, quit the loop
+        break;
+      }
       else if (msg_type == TIMEOUT_EXCEEDED){
         // graceful shutdown
         // close(sockfd);
@@ -80,6 +84,13 @@ int main(){
         printf("UNKOWN TYPE %d\n", msg_type);
       }
       sequence_number++;
+  }
+  struct key_receive key;
+  bzero(&key, sizeof(struct key_receive));
+  printf("%s\n", "Waiting for the key");
+  msg_type = receive_key_message(sockfd, &key);
+  if (msg_type == KEY_SND){
+    printf("KEY RECEIVED: %s", key.key);
   }
   return 0;
 }

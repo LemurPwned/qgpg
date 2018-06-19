@@ -42,8 +42,6 @@ int construct_message_type(int socketfd, int seq){
   generate_random_byte_string(string_buffer);
   strcpy(polarization_data.polarization_orthogonality, string_buffer);
 
-  // printf("%s\n", polarization_data.polarization_basis);
-  // printf("%s\n", polarization_data.polarization_orthogonality);
 
   memcpy((void *) to_send.payload, (void*)&polarization_data,
                                     sizeof(polarization_data));
@@ -52,6 +50,39 @@ int construct_message_type(int socketfd, int seq){
   return 0;
 }
 
+int construct_server_key_message(int socketfd, char master_key[64]){
+  struct qgpg_message to_send;
+  // intialize random state
+  global_time = time(NULL);
+  struct tm current_time = *localtime(&global_time);
+
+  to_send.type = KEY_SND; // receive polarization
+  to_send.date_sent = current_time.tm_sec;
+
+  memcpy((void *) to_send.payload, (void*)&master_key,
+                                    sizeof(master_key));
+
+  writen(socketfd, (char*)&to_send, sizeof(to_send));
+  return 0;
+}
+
+int receive_key_message(int socketfd, struct key_receive *data){
+  struct qgpg_message to_receive;
+
+  if(read(socketfd, (char *)&to_receive, sizeof(to_receive)) < 0){
+    perror("Failed to read from the socket");
+  }
+  printf("%d\n", to_receive.type);
+  printf("Date received: %d\n", to_receive.date_sent);
+  switch (to_receive.type) {
+    case KEY_SND:
+      data = (struct key_receive*)&to_receive.payload;
+      return KEY_SND;
+      
+    default:
+      return 0;
+  }
+}
 int receive_message(int socketfd, int seq, struct qgpg_data *data){
   struct qgpg_message to_receive;
   struct qgpg_data *recv_data;
@@ -76,6 +107,14 @@ int receive_message(int socketfd, int seq, struct qgpg_data *data){
     case TIMEOUT_EXCEEDED:
       printf("%s\n", "Connection timeout has been exceeded");
       return TIMEOUT_EXCEEDED;
+      break;
+
+    case KEY_EXNG_INIT:
+      return KEY_EXNG_INIT;
+      break;
+
+    case KEY_SND:
+      return KEY_SND;
       break;
 
     default:
@@ -125,8 +164,7 @@ void polarization_comparison(char input_buffer[64], char guess_buffer[64],
 void rigid_key_extraction(MKEY master_key, 
                           char input_buffer[64], int seq){
   unsigned char original_key = strtoll(input_buffer, NULL, 2);
-  unsigned char agreed_key[8];
-  master_key.key = (master_key.key_mask[seq]&original_key);
+  char *agreed_key;
 
   for (int i = 0; i < 8; i++) {
       if(!!((master_key.key_mask[seq] << i) & 0x80)){
@@ -138,7 +176,7 @@ void rigid_key_extraction(MKEY master_key,
         agreed_key[i] = 'X';
       }
     }
-    printf("%s\n", agreed_key);
+    master_key.key[seq] = agreed_key;
 }
 
 void binary_form(unsigned char *a){
