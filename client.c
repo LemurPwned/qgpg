@@ -90,7 +90,7 @@ int main(){
   printf("%s\n", "Waiting for the key");
   msg_type = receive_key_message(sockfd, &key);
   if (msg_type == KEY_SND){
-    printf("KEY RECEIVED: %s", key.key);
+    printf("KEY RECEIVED: %s\n", key.key);
   }
   return 0;
 }

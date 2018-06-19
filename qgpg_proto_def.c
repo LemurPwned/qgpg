@@ -4,10 +4,11 @@
 time_t global_time;
 
 int construct_server_message(int socketfd, int type){
+  printf("SENDING %d\n", type);
   struct qgpg_message server_message;
   struct qgpg_data null_data;
   // data is empty
-  bzero(&null_data, sizeof(null_data));
+  bzero(&null_data, sizeof(struct qgpg_data));
 
   global_time = time(NULL);
   struct tm current_time = *localtime(&global_time);
@@ -17,7 +18,7 @@ int construct_server_message(int socketfd, int type){
 
   // copy zeros to message payload
   memcpy((void *) server_message.payload, (void*)&null_data,
-                                    sizeof(null_data));
+                                          sizeof(struct qgpg_data));
   // write message to the server
   writen(socketfd, (char*)&server_message, sizeof(server_message));
   return 0;
@@ -50,8 +51,11 @@ int construct_message_type(int socketfd, int seq){
   return 0;
 }
 
-int construct_server_key_message(int socketfd, char master_key[64]){
+int construct_server_key_message(int socketfd, char master_key[100]){
   struct qgpg_message to_send;
+  struct key_receive key_send;
+  bzero(&key_send, sizeof(struct key_receive));
+  strcpy(key_send.key, master_key);
   // intialize random state
   global_time = time(NULL);
   struct tm current_time = *localtime(&global_time);
@@ -59,8 +63,8 @@ int construct_server_key_message(int socketfd, char master_key[64]){
   to_send.type = KEY_SND; // receive polarization
   to_send.date_sent = current_time.tm_sec;
 
-  memcpy((void *) to_send.payload, (void*)&master_key,
-                                    sizeof(master_key));
+  memcpy((void *) to_send.payload, (void*)&key_send,
+                                    sizeof(key_send));
 
   writen(socketfd, (char*)&to_send, sizeof(to_send));
   return 0;
@@ -68,6 +72,7 @@ int construct_server_key_message(int socketfd, char master_key[64]){
 
 int receive_key_message(int socketfd, struct key_receive *data){
   struct qgpg_message to_receive;
+  struct key_receive *recv_data;
 
   if(read(socketfd, (char *)&to_receive, sizeof(to_receive)) < 0){
     perror("Failed to read from the socket");
@@ -76,7 +81,8 @@ int receive_key_message(int socketfd, struct key_receive *data){
   printf("Date received: %d\n", to_receive.date_sent);
   switch (to_receive.type) {
     case KEY_SND:
-      data = (struct key_receive*)&to_receive.payload;
+      recv_data = (struct key_receive*)&to_receive.payload;
+      *data = *recv_data;
       return KEY_SND;
       
     default:
@@ -110,6 +116,7 @@ int receive_message(int socketfd, int seq, struct qgpg_data *data){
       break;
 
     case KEY_EXNG_INIT:
+      printf("%s\n", "Received key exchange");
       return KEY_EXNG_INIT;
       break;
 

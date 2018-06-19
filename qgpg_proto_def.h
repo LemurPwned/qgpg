@@ -11,13 +11,14 @@
 
 #define MAX_PAYLOAD_SIZE 500
 #define BUFF_SIZE 1000
+#define MAX_SEQUENCE_EXCHANGE 3
 
 enum message_type {
   POLARIZATION_SND,
   POLARIZATION_REQ,
   TIMEOUT_EXCEEDED,
   KEY_EXNG_INIT,
-  KEY_SND,
+  KEY_SND
 };
 
 struct qgpg_data{
@@ -33,7 +34,7 @@ struct qgpg_message{
 };
 
 struct key_receive{
-    char key[64]; // pointer to first key
+    char key[200]; // pointer to first key
 };
 
 typedef struct key_exchange_register{
@@ -43,7 +44,7 @@ typedef struct key_exchange_register{
 
 int construct_message_type(int, int);
 int construct_server_message(int, int);
-int construct_server_key_message(int, char master_key[64]);
+int construct_server_key_message(int, char master_key[100]);
 
 int receive_message(int, int, struct qgpg_data *);
 int receive_key_message(int, struct key_receive *);
