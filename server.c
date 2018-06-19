@@ -127,21 +127,32 @@ int main(){
   //TODO: Enable deamon when app is ready
   //  skeleton_daemon();
 
+  struct qgpg_data data;
+  // zero the data
+  bzero(&data, sizeof(struct qgpg_data));
+  struct key_exchange_register master_key;
+  // zero the master key
+  bzero(&master_key, sizeof(struct key_exchange_register));
+
   int sequence_number = 1;
   int msg_type, saved_timeout_state;
   wait_timeout = 1;
   saved_timeout_state = 1;
-  #define SPECIFIED_TIMEOUT 2
+  // #define SPECIFIED_TIMEOUT 2
   // initialize by sending to alice
   construct_server_message(alice_fd, POLARIZATION_REQ);
   while(true){
       // receive from alice
       printf("%s\n", "Waiting for Alice...");
-      reset_and_start_timer(SPECIFIED_TIMEOUT);
-      msg_type = receive_message(alice_fd, sequence_number);
+      reset_and_start_timer(SPECIFIED_TIMEOUT/5);
+      msg_type = receive_message(alice_fd, sequence_number, &data);
       saved_timeout_state = wait_timeout;
-      alarm(0); // cancel
+      alarm(0); // cancel alarm 
       if (msg_type == POLARIZATION_SND){
+        // actual message, check the data
+        printf("%s\n", "Polarization received");
+        printf("%s\n", data.polarization_basis);
+        bzero(&data, sizeof(struct qgpg_data));
         // can send request
         // write to bob that he should respond
         if (saved_timeout_state){
@@ -160,12 +171,14 @@ int main(){
       }
       sleep(SPECIFIED_TIMEOUT/5);
       printf("%s\n", "Receiving from Bob...");
-      reset_and_start_timer(SPECIFIED_TIMEOUT);
-      sleep(5);
-      msg_type = receive_message(bob_fd, sequence_number);
+      reset_and_start_timer(SPECIFIED_TIMEOUT/5);
+      msg_type = receive_message(bob_fd, sequence_number, &data);
       saved_timeout_state = wait_timeout;
       alarm(0);
       if (msg_type == POLARIZATION_SND){
+        printf("%s\n", "Polarization received");
+        printf("%s\n", data.polarization_basis);
+        bzero(&data, sizeof(struct qgpg_data));
         // can send request
         // write to alice that she should send something
         if (saved_timeout_state){
@@ -174,7 +187,8 @@ int main(){
         else{
           printf("EXCEEDED TIME\n");
           construct_server_message(alice_fd, TIMEOUT_EXCEEDED);
-        }      }
+        }      
+      }
       else {
         printf("%s\n", "Quitting, invalid sequence");
         close(alice_fd);

@@ -54,10 +54,14 @@ int main(){
 
   int sequence_number = 1;
   int msg_type;
+  struct qgpg_data data;
+  // zero the data
+  bzero(&data, sizeof(struct qgpg_data));
+
   while(true)
   {
       // now wait for server to allow for connection
-      msg_type = receive_message(sockfd, sequence_number);
+      msg_type = receive_message(sockfd, sequence_number, &data);
       // send polarization if requested
       if (msg_type == POLARIZATION_REQ){
         printf("%s\n", "Sending response struct to server");
@@ -74,7 +78,7 @@ int main(){
       else {
         perror("Unknown server request");
         printf("UNKOWN TYPE %d\n", msg_type);
-        }
+      }
       sequence_number++;
   }
   return 0;
