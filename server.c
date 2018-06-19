@@ -52,17 +52,6 @@ int command_processor(char *command){
 
 
 int main(){ 
-  // unsigned char boy;
-  // for (int i = 0; i < MAX_SEQUENCE_EXCHANGE; i ++){
-  //   boy = (unsigned char) i;
-  //   master_key.key_mask[i] = boy;
-  // }
-  // for (int i = 0; i < MAX_SEQUENCE_EXCHANGE; i ++){
-  //   printf("%s : %d\n", "KEY", master_key.key_mask[i]);
-  // }
-  // exit(0);
-  // zero the master key
-
   char client_str[BUF_SIZE];
   char cmdline[BUF_SIZE];
   char msg[BUF_SIZE];
@@ -146,6 +135,7 @@ int main(){
 
   MKEY master_key;
   master_key.key_mask = (unsigned char*)malloc(MAX_SEQUENCE_EXCHANGE*sizeof(unsigned char));
+  master_key.key = (unsigned char*)malloc(MAX_SEQUENCE_EXCHANGE*sizeof(unsigned char));
 
   int sequence_number = 1;
   int msg_type, saved_timeout_state;
@@ -206,12 +196,17 @@ int main(){
         close(bob_fd);
         exit(-1);
       }
-      printf("COMPARING: \n%s\n%s\n", alice_data.polarization_orthogonality,
-                                      bob_data.polarization_orthogonality);
-      pol_comparison(alice_data.polarization_orthogonality, 
-                     bob_data.polarization_orthogonality,
-                     master_key, sequence_number);
-      printf("MASTER KEY: %ld\n", master_key.key_mask[sequence_number]);
+      printf("COMPARING: \n%s\n%s\n", alice_data.polarization_basis,
+                                      bob_data.polarization_basis);
+      polarization_comparison(alice_data.polarization_basis, 
+                              bob_data.polarization_basis,
+                              master_key, sequence_number);
+      // basing on Bob's hits devise original key from Alice and mask it
+      rigid_key_extraction(master_key, alice_data.polarization_orthogonality, 
+                           sequence_number);
+      printf("MASTER KEY MASK: %ld\n", master_key.key_mask[sequence_number]);
+      printf("ALICE KEY: %s\n", alice_data.polarization_orthogonality);
+      // printf("MASTER KEY: %ld\n", master_key.key[sequence_number]);
       if (sequence_number >= MAX_SEQUENCE_EXCHANGE){
         // polarization exchange ended
         // time to exchange keys
@@ -220,7 +215,7 @@ int main(){
       }
       sequence_number++; // await next message
       // decode polarization
-	 }
+	}
 
   return 0;
 }

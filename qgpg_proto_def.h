@@ -40,8 +40,9 @@ int construct_server_message(int, int);
 
 int receive_message(int, int, struct qgpg_data *);
 void generate_random_byte_string(char string_buffer[64]);
-void pol_comparison(char input_buffer[64], char guess_buffer[64],
-                    MKEY, int seq);
+void polarization_comparison(char input_buffer[64], char guess_buffer[64],
+                             MKEY, int seq);
+void rigid_key_extraction(MKEY, char input_buffer[64], int);
 
 void binary_form(unsigned char*);
 #endif

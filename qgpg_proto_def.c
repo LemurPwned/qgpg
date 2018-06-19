@@ -109,7 +109,7 @@ void generate_random_byte_string(char string_buffer[64]){
   printf("Generated string is: %s\n", string_buffer);
 }
 
-void pol_comparison(char input_buffer[64], char guess_buffer[64],
+void polarization_comparison(char input_buffer[64], char guess_buffer[64],
                     MKEY master_key, int seq){
   // unsigned char because we send just one byte via channel
   unsigned char input = strtol(input_buffer, NULL, 2); 
@@ -120,6 +120,25 @@ void pol_comparison(char input_buffer[64], char guess_buffer[64],
   printf("%s\n", "Devised mask above");
   //mask should now contain only ones that do agree
   master_key.key_mask[seq] = mask;
+}
+
+void rigid_key_extraction(MKEY master_key, 
+                          char input_buffer[64], int seq){
+  unsigned char original_key = strtoll(input_buffer, NULL, 2);
+  unsigned char agreed_key[8];
+  master_key.key = (master_key.key_mask[seq]&original_key);
+
+  for (int i = 0; i < 8; i++) {
+      if(!!((master_key.key_mask[seq] << i) & 0x80)){
+        // one means hit and we rewrite the key
+        agreed_key[i] = !!((original_key << i) & 0x80) + '0';
+      }
+      else{
+        // zero means miss and we skip it
+        agreed_key[i] = 'X';
+      }
+    }
+    printf("%s\n", agreed_key);
 }
 
 void binary_form(unsigned char *a){
